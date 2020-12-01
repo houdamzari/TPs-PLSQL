@@ -1,0 +1,5 @@
+CREATE PROCEDURE p_AddWarehouse(r_Warehouse IN WAREHOUSES%ROWTYPE) IS
+BEGIN
+    INSERT INTO WAREHOUSES VALUES (ISEQ$$_77908.nextval, r_Warehouse.WAREHOUSE_NAME, r_Warehouse.LOCATION_ID);
+    DBMS_OUTPUT.PUT_LINE('DONE : Warehouse Added. ');
+END p_AddWarehouse;

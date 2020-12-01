@@ -1,12 +1,12 @@
-CREATE OR REPLACE TRIGGER t_DeclineCreditLimitEdit
-    BEFORE UPDATE ON CUSTOMERS
-    FOR EACH ROW
+CREATE OR REPLACE TRIGGER customers_credit_trg
+    BEFORE UPDATE OF credit_limit
+    ON customers
 DECLARE
-    v_CurrentDay     NUMBER := EXTRACT(DAY FROM SYSDATE);
+    l_day_of_month NUMBER;
 BEGIN
-    IF 28 <= v_CurrentDay AND v_CurrentDay <= 30 THEN
-        DBMS_OUTPUT.PUT_LINE('==> ALERT: ');
-        DBMS_OUTPUT.PUT_LINE('You cant change the CREDIT LIMIT, Today is: ' || v_CurrentDay);
-        :new.CREDIT_LIMIT := :old.CREDIT_LIMIT;
+    l_day_of_month := EXTRACT(DAY FROM sysdate);
+
+    IF l_day_of_month BETWEEN 1 AND 3 THEN
+        raise_application_error(-20100,'Cannot update customer credit from 28th to 31st');
     END IF;
 END;
