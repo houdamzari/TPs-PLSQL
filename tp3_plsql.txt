@@ -1,0 +1,170 @@
+-------------------------------------------------- exo 1 quest 1 --------------------------------------------
+
+
+CREATE OR REPLACE PROCEDURE add_warehouse(id IN number,name IN varchar2,local IN number) IS
+begin
+INSERT INTO WAREHOUSES(warehouse_id,warehouse_name,location_id) VALUES (id,name,local) ;
+END;
+/
+DECLARE 
+id1 WAREHOUSES.WAREHOUSE_ID%type;
+name1 warehouses.warehouse_name%type;
+local1 warehouses.location_id%type;
+
+BEGIN
+id1:=&id1;
+name1:='&name1';
+local1:=&local1;
+add_warehouse(id1,name1,local1);
+dbms_output.put_line('done');
+END;
+/
+
+------------------------------------------------------ exo 1 quest 2 -----------------------------------------------
+
+SET SERVEROUTPUT ON;
+create or replace PROCEDURE MOD_WAREHOUSE (v_warehouse warehouses.warehouse_id%type,v_name warehouses.warehouse_name%type,v_location warehouses.location_id%type) IS
+BEGIN
+UPDATE WAREHOUSES SET warehouse_name = v_name,location_id=v_location WHERE warehouse_id=v_warehouse;
+END;
+/
+declare 
+v_warehouse warehouses.warehouse_id%type;
+v_location locations.location_id%type;
+v_name warehouses.warehouse_name%type;
+BEGIN
+v_warehouse:=&v_warehouse;
+v_name:='&v_name';
+v_location:=&v_location;
+MOD_WAREHOUSE(v_warehouse ,v_name,v_location);
+END;
+/
+
+
+----------------------------------------------------- exo1 quest 3 ------------------------------------------------
+CREATE OR REPLACE PROCEDURE delete_warehouse(warehouse IN number) IS
+begin
+DELETE from WAREHOUSES WHERE warehouse_id=warehouse;
+END;
+/
+DECLARE 
+warehouse1 WAREHOUSES.WAREHOUSE_ID%type;
+
+BEGIN
+warehouse1:=&warehouse1;
+delete_warehouse(warehouse1);
+dbms_output.put_line('done');
+END;
+/
+--------------------------------------------------------- exo 1 quest 4 --------------------------------------------
+
+create or replace procedure aff(loc in warehouses.loaction_id%type) IS
+CURSOR names is 
+SELECT warehouse_id, warehouse_name from warehouses where warehouses.location_id=loc;
+begin
+for i in names loop
+sbms_output.put_line('les informations :'||i.warehouse_id||' ' ||i.warehouse_name);
+end loop;
+end;
+
+
+-------------------------------------------------------------- exo 1 quest5 -----------------------------------------------------
+ 
+
+create or replace PROCEDURE CA(v_employee_id IN EMPLOYEES.EMPLOYEE_ID%TYPE,somme OUT number)IS
+BEGIN
+SELECT SUM(QUANTITY*UNIT_PRICE)INTO somme FROM ORDERS INNER JOIN ORDER_ITEMS USING(ORDER_ID) WHERE SALESMAN_ID=v_employee_id;
+END;
+/
+DECLARE
+v_employee EMPLOYEES.EMPLOYEE_ID%TYPE;
+somme1 number;
+BEGIN
+v_employee:=&v_employee;
+CA(v_employee,somme1);
+dbms_output.put_line('Le chiffre d affaire de l employe  '||v_employee||' est : '||somme1);
+END;
+/
+
+
+---------------------------------------------  fct quest2 -----------------------------------------------------------------------
+DECLARE
+v_Total   NUMBER;
+FUNCTION Pending RETURN NUMBER IS v_Total NUMBER;
+BEGIN
+SELECT COUNT(ORDER_ID) INTO v_Total FROM ORDERS WHERE STATUS = 'Pending';
+RETURN v_Total;
+END Pending;
+BEGIN
+v_Total := Pending();
+DBMS_OUTPUT.PUT_LINE('le nombre de commande qui ont le statut : Pending est : ' || v_Total);
+END;
+
+----------------------------------------------- declencheur q : 1 ------------------------------------------------------------------
+
+CREATE OR REPLACE TRIGGER t_OrderSummary
+BEFORE INSERT OR UPDATE ON ORDERS
+FOR EACH ROW
+DECLARE
+BEGIN
+DBMS_OUTPUT.PUT_LINE(' New Order Added: Order ID : ' || :new.ORDER_ID||' Customer ID   : ' || :new.CUSTOMER_ID||' Status ID     : ' || :new.STATUS||' Salesman ID   : ' || :new.SALESMAN_ID||' Order Date    : ' || :new.ORDER_DATE);
+END;
+/
+BEGIN
+update ORDERS set STATUS ='Pending' WHERE ORDER_ID=1;
+END;
+/
+
+
+-------------------------------------------------- declencheur q: 2 ----------------------------------------------------------------
+
+CREATE OR REPLACE TRIGGER alerte
+AFTER UPDATE OR DELETE ON INVENTORIES
+FOR EACH ROW
+DECLARE
+BEGIN
+IF (:NEW.QUANTITY <10) THEN
+DBMS_OUTPUT.PUT_LINE(' quantité  < 10 ');
+END IF;
+END;
+/
+UPDATE INVENTORIES set quantity=70 where product_id=80;
+DELETE FROM INVENTORIES WHERE product_id=9;
+
+------------------------------------------------ declencheur q: 3  ------------------------------------------------------------------
+
+CREATE OR REPLACE TRIGGER modifier
+BEFORE UPDATE OF CREDIT_LIMIT  ON customers
+DECLARE
+JOUR NUMBER;
+BEGIN
+JOUR := EXTRACT(DAY FROM sysdate);
+IF 28 <= JOUR AND JOUR <= 30 THEN
+dbms_output.put_line('vous ne pouvez pas modifier les CREDIT_LIMIT des clients entre le 28 et 30 de chaque mois');
+END IF;
+END;
+/
+update CUSTOMERS set CREDIT_LIMIT=0 where CUSTOMER_ID=40;
+
+--------------------------------------------------- declencheur q: 4 ------------------------------------------------------------------
+
+CREATE OR REPLACE TRIGGER ajout_interdit
+BEFORE insert ON customers
+FOR EACH ROW
+BEGIN
+IF sysdate < :NEW.HIRE_DATE THEN
+dbms_output.put_line('impossible d ajouter un employé');
+END IF;
+END;
+--------------------------------------------------- declencheur q: 5 ------------------------------------------------------------------
+
+CREATE OR REPLACE TRIGGER remise
+BEFORE INSERT ON order_items FOR EACH ROW
+DECLARE
+somme number;
+BEGIN
+if :New.unit_price*:NEW.Quantity > 10000 then somme:=(:New.unit_price*:NEW.Quantity*95)/100;
+DBMS_OUTPUT.PUT_LINE(' le montant : ' ||somme);
+end if;
+END;
+ 
