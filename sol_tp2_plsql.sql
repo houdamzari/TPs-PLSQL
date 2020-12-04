@@ -64,3 +64,98 @@ emp_id number;
     END LOOP;
     END;
 ------------------------------------------------------    
+
+---------------Question 3---------------------
+SET SERVEROUTPUT ON
+DECLARE 
+    CURSOR c_clients IS
+        SELECT customer_id, SUM(unit_price * quantity) 
+        FROM ORDERS
+        INNER JOIN ORDER_ITEMS USING(ORDER_ID)
+        GROUP BY customer_id
+        having SUM(unit_price * quantity) > 2000;
+    
+counter INTEGER;
+BEGIN
+   counter:=0;
+    FOR N IN c_clients LOOP
+        UPDATE CUSTOMERS 
+        SET credit_limit=credit_limit+50
+        WHERE customer_id= N.customer_id;
+        counter := counter + 1;    
+    END LOOP;
+            DBMS_OUTPUT.PUT_LINE(' Le nombre de clients mis a jour est: '|| counter ); 
+END;
+
+------------------------------------------------------  
+
+---------------Question 4----------------------------
+
+SET SERVEROUTPUT ON
+DECLARE 
+    CURSOR c_clients IS
+        SELECT customer_id, SUM(unit_price * quantity) 
+        FROM ORDERS
+        INNER JOIN ORDER_ITEMS USING(ORDER_ID)
+        GROUP BY customer_id
+        having SUM(unit_price * quantity) > 10000;
+    
+counter INTEGER;
+BEGIN
+   counter:=0;
+    FOR N IN c_clients LOOP
+        UPDATE CUSTOMERS 
+        SET credit_limit=credit_limit+50
+        WHERE customer_id= N.customer_id;
+        counter := counter + 1;    
+    END LOOP;
+            DBMS_OUTPUT.PUT_LINE(' Le nombre de clients mis a jour est: '|| counter ); 
+END;
+
+------------Question 5-----------------------------------
+
+SET SERVEROUTPUT ON
+DECLARE 
+        v_agent orders.salesman_id%type;
+        enter_date orders.order_date%type;
+        end_date orders.order_date%type;
+        taux_vente float(15);
+        sum1 float(15);
+
+
+    CURSOR c_salesman IS
+        SELECT SUM(unit_price * quantity) AS total_s FROM ORDERS
+        INNER JOIN ORDER_ITEMS USING(ORDER_ID)
+        WHERE order_date BETWEEN enter_date AND end_date
+        AND salesman_id = v_agent;
+        
+BEGIN
+    v_agent:=&v_agent;
+    enter_date:='&enter_date';
+    end_date:='&end_date';
+    sum1:=0;
+ 
+ --calcul totalite de ventes des employees--
+ 
+        SELECT SUM(unit_price * quantity) INTO sum1 FROM ORDERS
+        INNER JOIN ORDER_ITEMS USING(ORDER_ID)
+        WHERE order_date BETWEEN enter_date AND end_date;
+    
+    DBMS_OUTPUT.PUT_LINE(' Le total de vente entre ces deux dates est: ' || sum1 || ' dollars'); 
+    
+    FOR j in c_salesman LOOP
+        taux_vente := 100 * j.total_s/sum1;
+        DBMS_OUTPUT.PUT_LINE('le taux de vente de l employee d id: '|| v_agent || ' est egale a: ' || taux_vente || '%');
+    END LOOP;
+END;
+
+
+
+
+
+
+
+
+
+
+
