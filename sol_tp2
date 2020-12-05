@@ -1,0 +1,100 @@
+*********************** question 1 **********************
+
+DECLARE
+    r_emp employees%ROWTYPE;
+    CURSOR c_employees IS SELECT employee_id, first_name, last_name, job_title, hire_date, manager_id FROM employees;
+BEGIN
+    OPEN c_employees;
+    LOOP
+    FETCH c_employees 
+    into r_emp.employee_id, r_emp.first_name, r_emp.last_name, r_emp.job_title, r_emp.hire_date, r_emp.manager_id;
+        EXIT WHEN c_employees%NOTFOUND;
+        dbms_output.put_line('Employe ' || r_emp.first_name || ' ' || r_emp.last_name || ' (ID = ' || r_emp.employee_id || ' ) ' || 'travaille comme ' || r_emp.job_title || ' depuis ' || r_emp.hire_date || ' sous la direction de ' || r_emp.last_name || ' (matricule = ' || r_emp.manager_id || ' )');
+    END LOOP;
+    CLOSE c_employees;
+END;
+
+*********************** question 2 **********************
+
+DECLARE
+    CURSOR c_customers(v_customer_id ORDERS.CUSTOMER_ID%TYPE)IS SELECT COUNT(*)  FROM ORDERS WHERE CUSTOMER_ID=v_customer_id;
+    CURSOR c_salesman(v_salesman_id ORDERS.SALESMAN_ID%TYPE)IS SELECT COUNT(*)  FROM ORDERS WHERE SALESMAN_ID=v_salesman_id;
+    v_id1 ORDERS.CUSTOMER_ID%TYPE:=&v_id1;
+    v_id2 ORDERS.SALESMAN_ID%TYPE:=&v_id2;
+    n1 INT;
+    n2 INT;
+BEGIN
+    OPEN c_customers(v_id1);
+    FETCH c_customers
+    INTO n1;
+    DBMS_OUTPUT.PUT_LINE('le nombre de commande de client id '|| v_id1 ||' est  '||n1||'.');
+    CLOSE c_customers;
+
+    OPEN c_salesman(v_id2);
+    FETCH c_salesman INTO n2;
+    DBMS_OUTPUT.PUT_LINE('le nombre de ventes d employee id '|| v_id2 ||' est  '||n2||'.');
+    CLOSE c_salesman;
+END;
+
+*********************** question 3 **********************
+
+DECLARE
+      CURSOR c_customer is SELECT customer_id , SUM(QUANTITY * UNIT_PRICE) FROM ORDERS
+      INNER JOIN order_items USING(order_id)
+      group by customer_id
+      having SUM(QUANTITY*UNIT_PRICE) > 2000;
+      c int;
+BEGIN
+    c:=0;
+    for i in c_customer loop
+      update customers set credit_limit = credit_limit + 50
+      where customer_id = i.customer_id;
+      c:=c+1;
+    end loop;
+      dbms_output.put_line('Le nombre de ligne mis a jour est : ' || c);
+END;
+
+
+*********************** question 4 **********************
+ 
+DECLARE
+      CURSOR c_customer is SELECT customer_id , SUM(QUANTITY * UNIT_PRICE) FROM ORDERS
+      INNER JOIN order_items USING(order_id)
+      group by customer_id
+      having SUM(QUANTITY*UNIT_PRICE) > 10000;
+      c int;
+BEGIN
+    c:=0;
+    for i in c_customer loop
+      update customers set credit_limit = credit_limit + 50
+      where customer_id = i.customer_id;
+      c:=c+1;
+    end loop;
+      dbms_output.put_line('Le nombre de ligne mis a jour est : ' || c);
+END;
+
+
+*********************** question 5 **********************
+
+ DECLARE
+    v_salesman orders.salesman_id%type;
+    date_deb orders.order_date%type;
+    date_fin orders.order_date%type;
+    taux float;
+    somme int;
+    cursor rate is
+    select count(*)*100/(select count(*) from orders where STATUS = 'Shipped' AND ORDER_DATE>date_deb AND ORDER_DATE<date_fin) as taux_vente  from orders where (STATUS = 'Shipped' AND ORDER_DATE>date_deb AND ORDER_DATE<date_fin) group by salesman_id having salesman_id=v_salesman;
+      
+BEGIN
+
+    v_salesman := &v_salesman;
+    date_deb := '&date_deb';
+    date_fin := '&date_fin';
+    open rate;
+    loop
+    fetch rate into taux ;
+    EXIT WHEN rate%NOTFOUND;
+    dbms_output.put_line('Le taux de vente de ' || v_salesman || ' est : ' || taux.taux_vente  || '%' );
+    END LOOP;
+    CLOSE  rate;
+END;
